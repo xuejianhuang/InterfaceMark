@@ -1,0 +1,10 @@
+# Install the CUDA-specific PyTorch build before this file.
+accelerate==1.14.0
+diffusers==0.39.0
+huggingface_hub==1.23.0
+numpy==2.3.2
+Pillow==11.3.0
+PyYAML==6.0.2
+safetensors==0.8.0
+scipy==1.18.0
+transformers==5.14.0

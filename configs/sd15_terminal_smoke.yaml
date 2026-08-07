@@ -1,0 +1,21 @@
+model: models/sd15
+prompts: prompts/PartiPrompts.tsv
+output: runs/sd15_terminal_smoke
+
+resolution: 512
+steps: 30
+guidance: 7.5
+tail_probability: 2.5e-7
+
+carrier_seed: 51001
+wrong_carrier_seed: 51002
+shuffle_seed: 51003
+split_seed: 2026071711
+base_seed: 58100000
+
+design_size: 8
+quality_design_count: 8
+quality_grid_size: 5
+calibration_size: 16
+test_size: 16
+target_fpr: 0.01
