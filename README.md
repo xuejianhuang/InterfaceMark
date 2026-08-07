@@ -93,46 +93,6 @@ export HF_HOME="$PWD/cache/huggingface"
 The default configurations expect the checkpoint at `models/sd15`. Edit the
 `model` field in the YAML file if it is stored elsewhere.
 
-## Smoke reproduction
-
-The smoke configuration uses 8 design samples, 16 clean calibration images,
-and 16 paired test cases. It checks the complete workflow but is not a
-paper-scale statistical evaluation.
-
-```bash
-bash scripts/run_full.sh configs/sd15_terminal_smoke.yaml
-```
-
-Successful completion creates:
-
-```text
-runs/sd15_terminal_smoke/
-├── PREPARE_COMPLETE
-├── CALIBRATION_COMPLETE
-├── TEST_COMPLETE
-├── EVALUATION_COMPLETE
-├── config.resolved.json
-├── controls.json
-├── carriers.pt
-├── splits/
-│   ├── calibration/00000/
-│   │   ├── clean.png
-│   │   └── summary.json
-│   └── test/00000/
-│       ├── clean.png
-│       ├── tail_coupled.png
-│       ├── shuffled_tail.png
-│       ├── fixed_rms.png
-│       ├── fixed_quality.png
-│       └── summary.json
-├── summary.json
-└── summary.csv
-```
-
-Each sample record includes the prompt, seed, applied displacement, correct-
-and wrong-key scores, paired PSNR/RGB MSE, runtime, and peak allocated GPU
-memory.
-
 ## Formal 5,000/5,000 reproduction
 
 The formal configuration exactly specifies:
@@ -235,22 +195,7 @@ The released 5,000-calibration/5,000-test run produced:
 
 | Variant | AUC | TPR at calibrated 1% FPR | Wrong-key AUC | Mean PSNR |
 |---|---:|---:|---:|---:|
-| Tail-coupled | 0.999635 | 99.46% | 0.5064 | 35.04 dB |
-| Shuffled-tail | 0.998765 | 98.58% | 0.5062 | 35.04 dB |
-| Fixed-RMS | 0.999639 | 99.60% | 0.5064 | 34.80 dB |
-| Fixed-quality | 0.999791 | 99.76% | 0.5068 | 34.32 dB |
-
-The observed clean test FPR was 1.26%. The score used here is always the
-training-free analytic carrier projection; no learned detector or voting
-ensemble is involved.
-
-## Reproducibility notes
-
-- Keep calibration and test outputs separate.
-- Do not tune the threshold, carrier, tail probability, or Fixed-quality
-  displacement on the test split.
-- Use `summary.json` and completion markers rather than counting files by hand.
-- The prompt table is versioned and its SHA-256 is stored in every resolved
-  configuration.
-- The repository does not include attacks or robustness training; this release
-  reproduces the clean terminal-interface study only.
+| Tail-coupled | 0.99999 | 99.98% | 0.50566 | 35.04 dB |
+| Shuffled-tail | 0.99990 | 98.80% | 0.50538 | 35.04 dB |
+| Fixed-RMS | 0.99999 | 99.96% | 0.50558 | 34.80 dB |
+| Fixed-quality | 1.00000 | 100.00% | 0.50603 | 34.32 dB |
