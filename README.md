@@ -53,6 +53,12 @@ conda activate interfacemark
 pip install torch==2.8.0 torchvision==0.23.0 \
   --index-url https://download.pytorch.org/whl/cu128
 
+pip install -e ".[test]"
+```
+Run the mathematical unit tests:
+
+```bash
+pytest -q
 ```
 
 ### 3. Download Stable Diffusion 1.5
