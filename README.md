@@ -1,10 +1,8 @@
 # InterfaceMark
 
-Official implementation of the released **Terminal InterfaceMark** protocol:
-training-free, one-bit watermark-presence detection for a frozen latent
-diffusion model.
+Official implementation of **Terminal InterfaceMark**, a protocol for one-bit watermark-presence detection in frozen latent diffusion models.
 
-## Repository structure
+## Repository Structure
 
 ```text
 interfacemark-watermark/
@@ -16,11 +14,11 @@ interfacemark-watermark/
 ├── scripts/
 │   └── run_full.sh
 ├── src/interfacemark/
-│   ├── core.py        # carrier, tail transport, four displacement laws
-│   ├── sd15.py        # frozen SD1.5/VAE channel
-│   ├── prepare.py     # splits, carriers, and design-set controls
+│   ├── core.py        # carrier construction, tail transport, and four displacement laws
+│   ├── sd15.py        # frozen SD1.5/VAE generation channel
+│   ├── prepare.py     # data splits, carriers, and design-set controls
 │   ├── generate.py    # resumable image generation and scoring
-│   ├── evaluate.py    # audit, calibration, AUC/TPR/FPR, quality
+│   ├── evaluate.py    # auditing, calibration, AUC/TPR/FPR, and image quality
 │   └── records.py     # hashes and atomic records
 ├── tests/
 │   └── test_core.py
@@ -30,24 +28,23 @@ interfacemark-watermark/
 
 ## Dependencies
 
-The reported SD1.5 experiment was run on:
+The reported SD1.5 experiments were conducted with:
 
-- Ubuntu 22.04;
-- Python 3.12;
-- PyTorch 2.8.0 + CUDA 12.8;
-- one NVIDIA RTX 5090 (32 GB).
+* Ubuntu 22.04;
+* Python 3.12;
+* PyTorch 2.8.0 + CUDA 12.8;
+* one NVIDIA RTX 5090 GPU (32 GB).
 
-Other modern NVIDIA GPUs can be used with the corresponding PyTorch wheel.
-The released protocol requires CUDA.
+Other recent NVIDIA GPUs can be used with the corresponding PyTorch build. The released implementation requires CUDA.
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/xuejianhuang/InterfaceMark.git
 cd InterfaceMark
 ```
 
-### 2. Create the environment
+### 2. Create the Environment
 
 ```bash
 conda create -n interfacemark python=3.12 -y
@@ -59,7 +56,7 @@ pip install torch==2.8.0 torchvision==0.23.0 \
 pip install -e ".[test]"
 ```
 
-Verify CUDA:
+Verify the CUDA installation:
 
 ```bash
 python -c "import torch; print(torch.__version__, torch.version.cuda); print(torch.cuda.get_device_name(0)); assert torch.cuda.is_available()"
@@ -73,7 +70,7 @@ pytest -q
 
 ### 3. Download Stable Diffusion 1.5
 
-Model weights are not redistributed by this repository.
+Model weights are not redistributed with this repository.
 
 ```bash
 hf auth login
@@ -83,28 +80,27 @@ hf download stable-diffusion-v1-5/stable-diffusion-v1-5 \
   --local-dir models/sd15
 ```
 
-For networks that require the Hugging Face mirror:
+For networks that require a Hugging Face mirror:
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HOME="$PWD/cache/huggingface"
 ```
 
-The default configurations expect the checkpoint at `models/sd15`. Edit the
-`model` field in the YAML file if it is stored elsewhere.
+The default configurations expect the checkpoint at `models/sd15`. If the model is stored elsewhere, update the `model` field in the corresponding YAML file.
 
-## Formal 5,000/5,000 reproduction
+## Formal 5,000/5,000 Reproduction
 
-The formal configuration exactly specifies:
+The formal configuration specifies:
 
-- 640 independent design samples;
-- 64 of them for Fixed-quality selection;
-- 5,000 clean calibration images;
-- 5,000 unseen clean/watermarked test pairs;
-- 30 sampling steps and classifier-free guidance 7.5;
-- tail probability \(p=2.5\times10^{-7}\);
-- independent correct- and wrong-key carrier seeds;
-- a target false-positive rate of 1%.
+* 640 independent design samples;
+* 64 design samples for Fixed-quality selection;
+* 5,000 clean calibration images;
+* 5,000 unseen clean/watermarked test pairs;
+* 30 sampling steps with classifier-free guidance of 7.5;
+* tail probability (p = 2.5 \times 10^{-7});
+* independent carrier seeds for the correct and wrong keys;
+* a target false-positive rate of 1%.
 
 Run the resumable pipeline:
 
@@ -117,20 +113,19 @@ bash scripts/run_full.sh configs/sd15_terminal_5000.yaml \
   2>&1 | tee runs/sd15_terminal_5000.log
 ```
 
-Detach without stopping the run with `Ctrl+B`, then `D`. Reconnect with:
+Detach from the session without stopping the run using `Ctrl+B`, followed by `D`. Reconnect with:
 
 ```bash
 tmux attach -t interfacemark
 ```
 
-The wrapper is resumable. Existing shards are accepted only when their
-configuration hash, metadata, and image inventory are complete.
+The pipeline is resumable. Existing shards are reused only when their configuration hashes, metadata, and image inventories are complete and consistent.
 
-## Run stages separately
+## Running Individual Stages
 
-The wrapper above executes these three stages.
+The wrapper above executes the following three stages.
 
-### Stage A: prepare
+### Stage A: Prepare
 
 ```bash
 interfacemark-prepare --config configs/sd15_terminal_5000.yaml
@@ -138,15 +133,15 @@ interfacemark-prepare --config configs/sd15_terminal_5000.yaml
 
 This command:
 
-1. deterministically creates disjoint design/calibration/test manifests;
-2. creates the correct and wrong secret carriers;
-3. computes Tail-coupled displacements;
+1. deterministically constructs disjoint design, calibration, and test manifests;
+2. generates the correct-key and wrong-key secret carriers;
+3. computes the Tail-coupled displacements;
 4. constructs the fixed Shuffled-tail permutation;
-5. fits Fixed-RMS on all 640 design displacements;
-6. fits Fixed-quality on 64 design images only;
-7. stores hashes and resolved settings.
+5. fits Fixed-RMS using all 640 design displacements;
+6. fits Fixed-quality using only 64 design images;
+7. stores hashes and fully resolved configuration settings.
 
-### Stage B: generate and score
+### Stage B: Generate and Score
 
 ```bash
 interfacemark-generate \
@@ -158,9 +153,7 @@ interfacemark-generate \
   --split test
 ```
 
-For every test case, SD1.5 is sampled once to obtain the clean terminal latent.
-The four watermark variants are then produced from that shared latent. This
-keeps prompts, initial noise, and generated content paired across variants.
+For each test sample, SD1.5 is sampled once to obtain the clean terminal latent. The four watermark variants are then generated from the same terminal latent, keeping the prompt, initial noise, and generated content paired across variants.
 
 To process a selected resumable range:
 
@@ -172,19 +165,19 @@ interfacemark-generate \
   --count 250
 ```
 
-### Stage C: audit and evaluate
+### Stage C: Audit and Evaluate
 
 ```bash
 interfacemark-evaluate --input runs/sd15_terminal_5000
 ```
 
-Evaluation fails closed if a sample, image, score, seed, or configuration hash
-is missing or inconsistent. The threshold is derived only from the clean
-calibration split. The test split reports:
+Evaluation fails closed if any sample, image, score, seed, or configuration hash is missing or inconsistent. The detection threshold is determined exclusively from the clean calibration split.
 
-- AUC;
-- TPR at the independently calibrated 1% FPR;
-- observed test FPR and Wilson 95% interval;
-- wrong-key AUC;
-- paired PSNR and RGB MSE;
-- runtime and peak GPU memory.
+The test split reports:
+
+* AUC;
+* TPR at the independently calibrated 1% FPR threshold;
+* observed test FPR with a Wilson 95% confidence interval;
+* wrong-key AUC;
+* paired PSNR and RGB MSE;
+* runtime and peak GPU memory usage.
