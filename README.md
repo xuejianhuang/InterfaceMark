@@ -43,8 +43,8 @@ The released protocol requires CUDA.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/alllllinnrann/interfacemark-watermark.git
-cd interfacemark-watermark
+git clone https://github.com/xuejianhuang/InterfaceMark.git
+cd InterfaceMark
 ```
 
 ### 2. Create the environment
