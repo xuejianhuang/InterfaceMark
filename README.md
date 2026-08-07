@@ -53,19 +53,6 @@ conda activate interfacemark
 pip install torch==2.8.0 torchvision==0.23.0 \
   --index-url https://download.pytorch.org/whl/cu128
 
-pip install -e ".[test]"
-```
-
-Verify the CUDA installation:
-
-```bash
-python -c "import torch; print(torch.__version__, torch.version.cuda); print(torch.cuda.get_device_name(0)); assert torch.cuda.is_available()"
-```
-
-Run the mathematical unit tests:
-
-```bash
-pytest -q
 ```
 
 ### 3. Download Stable Diffusion 1.5
