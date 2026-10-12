@@ -174,3 +174,65 @@ The test split reports:
 * wrong-key AUC;
 * paired PSNR and RGB MSE;
 * runtime and peak GPU memory usage.
+
+## Learned Verifier
+
+### Architecture
+
+The verifier takes a feature vector of dimension `D` per sample:
+
+* SD1.5 (4 latent channels): `D = 68`;
+* SD3.5 (16 latent channels): `D = 272`.
+
+The network is:
+
+```text
+Linear(D, 192) → LayerNorm → GELU → Dropout(0.12)
+→ Linear(192, 64) → GELU → Linear(64, 1)
+```
+
+### Training Objective
+
+The `multi_loss_identity_teacher_v1` protocol minimizes:
+
+```text
+L = L_cls + 0.25 * L_rank + 0.20 * L_teacher + 0.15 * L_wrong
+```
+
+* `L_teacher` regresses the **identity-view** projection score, standardized with the training-clean mean and population standard deviation. The same target is used for attacked views. The loss is SmoothL1 with beta 1.
+* Identity views receive weight 3; all other views receive weight 1.
+
+### Data Format
+
+Prepare separate training and validation `.pt` dictionaries with the following fields:
+
+| Field | Content |
+|---|---|
+| `clean`, `marked`, `wrong_marked` | Float tensors `[N, V, D]`, raw compact features |
+| `projection_clean`, `projection_marked` | Float tensors `[N]`, correct-key Identity projections |
+| `views` | `V` view names, starting with `identity`; exact attack strengths must be recorded |
+| `ids` | `N` unique string sample IDs, disjoint across train and validation |
+
+### Feature Extraction
+
+Features are extracted from saved, scaled VAE posterior-mode latents:
+
+```python
+features(latents, carriers)  # [N,C,H,W], [K,C,H,W] -> [N,K,D]
+```
+
+### Training and Scoring
+
+```bash
+interfacemark-learned train \
+  --train design_train.pt \
+  --validation design_validation.pt \
+  --output runs/learned.pt \
+  --device cpu
+
+interfacemark-learned score \
+  --latents test_vae_latents.pt \
+  --checkpoint runs/learned.pt \
+  --key 51001 \
+  --output runs/test_scores.pt
+```
