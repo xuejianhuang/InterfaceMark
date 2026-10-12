@@ -19,9 +19,8 @@ interfacemark-watermark/
 │   ├── prepare.py     # data splits, carriers, and design-set controls
 │   ├── generate.py    # resumable image generation and scoring
 │   ├── evaluate.py    # auditing, calibration, AUC/TPR/FPR, and image quality
+│   ├── learned.py     # compact learned verifier and multi-loss training
 │   └── records.py     # hashes and atomic records
-├── tests/
-│   └── test_core.py
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -53,12 +52,7 @@ conda activate interfacemark
 pip install torch==2.8.0 torchvision==0.23.0 \
   --index-url https://download.pytorch.org/whl/cu128
 
-pip install -e ".[test]"
-```
-Run the mathematical unit tests:
-
-```bash
-pytest -q
+pip install -e .
 ```
 
 ### 3. Download Stable Diffusion 1.5
